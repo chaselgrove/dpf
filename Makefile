@@ -19,6 +19,7 @@ check :
 
 clean : 
 	rm -f MANIFEST
+	find . -name "*.pyc" -exec rm -v {} \;
 
 clobber : clean
 	rm -rf dist
