@@ -3,11 +3,11 @@
 import csv
 import json
 
-class TypeHandler:
+class DataHandler:
 
     """base class for type handlers"""
 
-class JSONHandler(TypeHandler):
+class JSONHandler(DataHandler):
 
     from_type = 'text/json'
     to_types = ['text/json']
@@ -20,7 +20,7 @@ class JSONHandler(TypeHandler):
             return False
         return True
 
-class CSVHandler(TypeHandler):
+class CSVHandler(DataHandler):
 
     from_type = 'text/csv'
     to_types = ['text/json']

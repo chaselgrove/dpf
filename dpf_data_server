@@ -4,11 +4,11 @@
 
 import wsgiref.simple_server
 import dpf.data
-import dpf.data.type_handlers
+import dpf.data.handlers
 
 app = dpf.data.Application('/Users/ch/Desktop/umms/dpf/tmp/data', 
-                           [dpf.data.type_handlers.JSONHandler(), 
-                           dpf.data.type_handlers.CSVHandler()])
+                           [dpf.data.handlers.JSONHandler, 
+                            dpf.data.handlers.CSVHandler])
 
 httpd = wsgiref.simple_server.make_server('localhost', 8080, app)
 print 'ready to serve on 8080'

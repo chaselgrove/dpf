@@ -13,11 +13,11 @@ read_size = 1024*1024
 
 class Application(dpf.Application):
 
-    def __init__(self, base_dir, th):
+    def __init__(self, base_dir, data_handlers):
         self.base_dir = base_dir
-        self.type_handlers = {}
-        for type_handler in th:
-            self.type_handlers[type_handler.from_type] = type_handler
+        self.data_handlers = {}
+        for dh_class in data_handlers:
+            self.data_handlers[dh_class.from_type] = dh_class
         return
 
     def __call__(self, environ, start_response):
@@ -92,9 +92,10 @@ class Application(dpf.Application):
                 bytes_remaining -= n_to_read
             fo.close()
 
-            if environ['CONTENT_TYPE'] in self.type_handlers:
-                type_handler = self.type_handlers[environ['CONTENT_TYPE']]
-                if not type_handler.validate(full_fname):
+            if environ['CONTENT_TYPE'] in self.data_handlers:
+                dh_class = self.data_handlers[environ['CONTENT_TYPE']]
+                data_handler = dh_class()
+                if not data_handler.validate(full_fname):
                     shutil.rmtree(dir)
                     msg = 'Data did not validate against content-type.\n'
                     raise dpf.HTTP400BadRequest('text/plain', msg)
@@ -138,8 +139,8 @@ class Application(dpf.Application):
 
             available_types = [source_content_type]
 
-            if source_content_type in self.type_handlers:
-                to_types = self.type_handlers[source_content_type].to_types
+            if source_content_type in self.data_handlers:
+                to_types = self.data_handlers[source_content_type].to_types
                 available_types.extend(to_types)
 
             content_type = dpf.choose_media_type(environ, available_types)
@@ -149,8 +150,9 @@ class Application(dpf.Application):
             if content_type == source_content_type:
                 data = open(fname).read()
             else:
-                type_handler = self.type_handlers[source_content_type]
-                data = type_handler.convert(fname, content_type)
+                dh_class = self.data_handlers[source_content_type]
+                data_handler = dh_class()
+                data = data_handler.convert(fname, content_type)
 
             tt = time.gmtime(d['creation time'])
             time_string = time.strftime('%a, %d %b %Y %H:%M:%S GMT', tt)
