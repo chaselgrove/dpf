@@ -73,13 +73,13 @@ class Application(dpf.Application):
 
             while True:
                 ident = '%08x' % random.getrandbits(32)
-                dir = '%s/%s' % (self.base_dir, ident)
+                dir = os.path.join(self.base_dir, ident)
                 if not os.path.exists(dir):
                     break
             os.mkdir(dir)
 
             fname = 'data'
-            full_fname = '%s/%s' % (dir, fname)
+            full_fname = os.path.join(dir, fname)
             fo = open(full_fname, 'w')
             bytes_remaining = content_length
             while bytes_remaining:
@@ -104,7 +104,7 @@ class Application(dpf.Application):
                 'creation time': int(time.time()), 
                 'data': {environ['CONTENT_TYPE']: fname}}
 
-            fo = open('%s/info.json' % dir, 'w')
+            fo = open(os.path.join(dir, 'info.json'), 'w')
             json.dump(d, fo)
             fo.close()
 
@@ -121,19 +121,19 @@ class Application(dpf.Application):
         if ident not in os.listdir(self.base_dir):
             raise dpf.HTTP404NotFound()
 
-        if not os.path.exists('%s/%s/info.json' % (self.base_dir, ident)):
+        if not os.path.exists(os.path.join(self.base_dir, ident, 'info.json')):
             raise dpf.HTTP410Gone()
 
         if environ['REQUEST_METHOD'] == 'DELETE':
-            for fname in os.listdir('%s/%s' % (self.base_dir, ident)):
-                os.remove('%s/%s/%s' % (self.base_dir, ident, fname))
+            for fname in os.listdir(os.path.join(self.base_dir, ident)):
+                shutil.rmtree(os.path.join(self.base_dir, ident, fname))
             headers = [('Content-Length', '0')]
             oi = ['']
             return ('200 OK', headers, oi)
 
         if environ['REQUEST_METHOD'] in ('HEAD', 'GET'):
 
-            d = json.load(open('%s/%s/info.json' % (self.base_dir, ident)))
+            d = json.load(open(os.path.join(self.base_dir, ident, 'info.json')))
 
             source_content_type = d['source content type']
 
@@ -145,7 +145,7 @@ class Application(dpf.Application):
 
             content_type = dpf.choose_media_type(environ, available_types)
 
-            fname = '%s/%s/data' % (self.base_dir, ident)
+            fname = os.path.join(self.base_dir, ident, 'data')
 
             if content_type == source_content_type:
                 data = open(fname).read()
