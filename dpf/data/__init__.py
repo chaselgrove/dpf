@@ -126,10 +126,10 @@ class Application(dpf.Application):
 
         if environ['REQUEST_METHOD'] == 'DELETE':
             for fname in os.listdir(os.path.join(self.base_dir, ident)):
-                shutil.rmtree(os.path.join(self.base_dir, ident, fname))
-            headers = [('Content-Length', '0')]
+                os.unlink(os.path.join(self.base_dir, ident, fname))
+            headers = []
             oi = ['']
-            return ('200 OK', headers, oi)
+            return ('204 No Content', headers, oi)
 
         if environ['REQUEST_METHOD'] in ('HEAD', 'GET'):
 
