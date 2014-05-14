@@ -1,0 +1,15 @@
+#!/usr/bin/python
+
+# See file COPYING distributed with dpf for copyright and license.
+
+import wsgiref.simple_server
+import dpf.process.handlers
+
+app = dpf.process.Application('/Users/ch/Desktop/umms/dpf/tmp/process', 
+                              {'/wc': dpf.process.handlers.WCHandler})
+
+httpd = wsgiref.simple_server.make_server('localhost', 8081, app)
+print 'ready to serve on 8081'
+httpd.serve_forever()
+
+# eof

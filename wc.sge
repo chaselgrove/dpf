@@ -1,0 +1,5 @@
+# See file COPYING distributed with dpf for copyright and license.
+
+curl -Ss -L "$1" | wc
+
+# eof
