@@ -2,16 +2,92 @@
 
 # See file COPYING distributed with dpf for copyright and license.
 
+import sys
+import os
+import argparse
+import ConfigParser
+import importlib
 import wsgiref.simple_server
 import dpf.data
-import dpf.data.handlers
 
-app = dpf.data.Application('/Users/ch/Desktop/umms/dpf/tmp/data', 
-                           [dpf.data.handlers.JSONHandler, 
-                            dpf.data.handlers.CSVHandler])
+description = """Start a data server."""
 
-httpd = wsgiref.simple_server.make_server('localhost', 8080, app)
-print 'ready to serve on 8080'
-httpd.serve_forever()
+progname = os.path.basename(sys.argv[0])
+
+parser = argparse.ArgumentParser(description=description,
+                                 formatter_class=argparse.RawTextHelpFormatter)
+
+parser.add_argument('--config', '-c', 
+                    help='the config file')
+parser.add_argument('--handler', '-H', 
+                    action='append', 
+                    dest='handlers', 
+                    help='a data handler (may be specified more than once)')
+parser.add_argument('--cache', '-C', 
+                    help='cache directory')
+parser.add_argument('--port', '-p', 
+                    default=8080, 
+                    type=int, 
+                    help='server port')
+parser.add_argument('-1', 
+                    default=True,
+                    action='store_false', 
+                    dest='serve_forever', 
+                    help='serve one request, then exit')
+
+args = parser.parse_args()
+
+if not args.config and not args.cache:
+    parser.print_usage(sys.stderr)
+    fmt = '%s: error: --config or --cache required\n'
+    sys.stderr.write(fmt % progname)
+    sys.exit(2)
+
+handler_paths = []
+
+if args.config:
+    config = ConfigParser.ConfigParser({'handlers': ''})
+    config.read(args.config)
+    cache = config.get('global', 'cache')
+    config_handlers = config.get('global', 'handlers')
+    for handler_path in config_handlers.split(','):
+        handler_path = handler_path.strip()
+        if not handler_path:
+            continue
+        handler_paths.append(handler_path)
+
+if args.cache:
+    cache = args.cache
+
+if args.handlers:
+    handler_paths.extend(args.handlers)
+
+print 'cache: %s' % cache
+
+if not handler_paths:
+    print 'no handlers'
+else:
+    print 'handlers:'
+    for hp in handler_paths:
+        print '    %s' % hp
+
+handlers = []
+for handler_path in handler_paths:
+    (module_path, class_name) = handler_path.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+    handler = getattr(module, class_name)
+    handlers.append(handler)
+
+app = dpf.data.Application(cache, handlers)
+
+httpd = wsgiref.simple_server.make_server('localhost', args.port, app)
+print 'ready to serve on port %d' % args.port
+
+if args.serve_forever:
+    httpd.serve_forever()
+
+httpd.handle_request()
+
+sys.exit(0)
 
 # eof
