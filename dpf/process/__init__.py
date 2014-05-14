@@ -200,7 +200,7 @@ class Application(dpf.Application):
                 self.delete_job(ident)
                 ph.delete()
                 shutil.rmtree(ph.working_dir)
-                return ('204 No Content', [('Content-Length', '0')], [''])
+                return ('204 No Content', [], [''])
 
             subpath = environ['PATH_INFO'][len(job_url)+1:]
 
