@@ -6,6 +6,7 @@ import tempfile
 import shutil
 import wsgiref
 import sqlite3
+import json
 import dpf
 
 db_ddl = """CREATE TABLE job (id TEXT NOT NULL PRIMARY KEY,
