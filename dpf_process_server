@@ -3,13 +3,95 @@
 # See file COPYING distributed with dpf for copyright and license.
 
 import wsgiref.simple_server
-import dpf.process.handlers
 
-app = dpf.process.Application('/Users/ch/Desktop/umms/dpf/tmp/process', 
-                              {'/wc': dpf.process.handlers.WCHandler})
+import sys
+import os
+import argparse
+import ConfigParser
+import importlib
+import wsgiref.simple_server
+import dpf.process
 
-httpd = wsgiref.simple_server.make_server('localhost', 8081, app)
-print 'ready to serve on 8081'
-httpd.serve_forever()
+description = """Start a process server."""
+
+progname = os.path.basename(sys.argv[0])
+
+parser = argparse.ArgumentParser(description=description,
+                                 formatter_class=argparse.RawTextHelpFormatter)
+
+parser.add_argument('--config', '-c', 
+                    help='the config file', 
+                    required=True)
+#parser.add_argument('--handler', '-H', 
+#                    action='append', 
+#                    dest='handlers', 
+#                    help='a process handler (may be specified more than once)')
+parser.add_argument('--cache', '-C', 
+                    help='cache directory')
+parser.add_argument('--port', '-p', 
+                    default=8081, 
+                    type=int, 
+                    help='server port')
+parser.add_argument('-1', 
+                    default=True,
+                    action='store_false', 
+                    dest='serve_forever', 
+                    help='serve one request, then exit')
+
+args = parser.parse_args()
+
+#if not args.config and not args.cache:
+#    parser.print_usage(sys.stderr)
+#    fmt = '%s: error: --config or --cache required\n'
+#    sys.stderr.write(fmt % progname)
+#    sys.exit(2)
+
+handler_info = {}
+
+config = ConfigParser.ConfigParser()
+config.read(args.config)
+cache = config.get('global', 'cache')
+for section in config.sections():
+    if not section.startswith('handler '):
+        continue
+    location = config.get(section, 'location')
+    class_path = config.get(section, 'class')
+    arguments = []
+    handler_info[location] = (class_path, arguments)
+
+if args.cache:
+    cache = args.cache
+
+print 'cache: %s' % cache
+
+if not handler_info:
+    print 'no handlers'
+else:
+    for location in sorted(handler_info):
+        (class_path, arguments) = handler_info[location]
+        if not arguments:
+            print '    %s: %s' % (location, class_path)
+        else:
+            print '    %s: %s%s' % (location, class_path, str(arguments))
+
+handlers = {}
+
+for (location, (class_path, arguments)) in handler_info.iteritems():
+    (module_path, class_name) = class_path.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+    handler_class = getattr(module, class_name)
+    handlers[location] = (handler_class, arguments)
+
+app = dpf.process.Application(cache, handlers)
+
+httpd = wsgiref.simple_server.make_server('localhost', args.port, app)
+print 'ready to serve on %d' % args.port
+
+if args.serve_forever:
+    httpd.serve_forever()
+
+httpd.handle_request()
+
+sys.exit(0)
 
 # eof
