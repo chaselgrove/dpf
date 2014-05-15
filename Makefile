@@ -2,6 +2,9 @@
 
 default : build
 
+test : 
+	nosetests
+
 build : dist/dpf-0.1.0.tar.gz
 
 dist/dpf-0.1.0.tar.gz : 
@@ -22,6 +25,6 @@ clean :
 	find . -name "*.pyc" -exec rm -v {} \;
 
 clobber : clean
-	rm -rf dist
+	rm -rf tmp dist
 
 # eof
