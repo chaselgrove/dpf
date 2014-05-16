@@ -20,12 +20,11 @@ parser = argparse.ArgumentParser(description=description,
                                  formatter_class=argparse.RawTextHelpFormatter)
 
 parser.add_argument('--config', '-c', 
-                    help='the config file', 
-                    required=True)
-#parser.add_argument('--handler', '-H', 
-#                    action='append', 
-#                    dest='handlers', 
-#                    help='a process handler (may be specified more than once)')
+                    help='the config file')
+parser.add_argument('--handler', '-H',
+                    action='append',
+                    dest='handlers',
+                    help='a data handler (may be specified more than once)')
 parser.add_argument('--cache', '-C', 
                     help='cache directory')
 parser.add_argument('--port', '-p', 
@@ -40,32 +39,39 @@ parser.add_argument('-1',
 
 args = parser.parse_args()
 
-#if not args.config and not args.cache:
-#    parser.print_usage(sys.stderr)
-#    fmt = '%s: error: --config or --cache required\n'
-#    sys.stderr.write(fmt % progname)
-#    sys.exit(2)
+if not args.config and not args.cache:
+    parser.print_usage(sys.stderr)
+    fmt = '%s: error: --config or --cache required\n'
+    sys.stderr.write(fmt % progname)
+    sys.exit(2)
 
 handler_info = {}
 
-config = ConfigParser.ConfigParser()
-config.read(args.config)
-cache = config.get('global', 'cache')
-for section in config.sections():
-    if not section.startswith('handler '):
-        continue
-    location = config.get(section, 'location')
-    class_path = config.get(section, 'class')
-    arguments = []
-    handler_info[location] = (class_path, arguments)
+if args.config:
+    config = ConfigParser.ConfigParser()
+    config.read(args.config)
+    cache = config.get('global', 'cache')
+    for section in config.sections():
+        if not section.startswith('handler '):
+            continue
+        location = config.get(section, 'location')
+        class_path = config.get(section, 'class')
+        arguments = []
+        handler_info[location] = (class_path, arguments)
 
 if args.cache:
     cache = args.cache
 
+if args.handlers:
+    for handler in args.handlers:
+        (location, class_path) = handler.split('=')
+        arguments = []
+        handler_info[location] = (class_path, arguments)
+
 print 'cache: %s' % cache
 
 if not handler_info:
-    print 'no handlers'
+    print 'WARNING: no handlers'
 else:
     for location in sorted(handler_info):
         (class_path, arguments) = handler_info[location]
