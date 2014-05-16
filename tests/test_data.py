@@ -1,7 +1,6 @@
 # See file COPYING distributed with dpf for copyright and license.
 
 import os
-import unittest
 import subprocess
 import socket
 import time
@@ -9,7 +8,7 @@ import uuid
 import httplib
 import json
 
-class test_data(unittest.TestCase):
+class test_data:
 
     @classmethod
     def setUpClass(cls):
