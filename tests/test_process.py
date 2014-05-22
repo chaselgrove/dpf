@@ -5,6 +5,7 @@ import subprocess
 import socket
 import time
 import httplib
+import json
 from . import start_process_server, start_data_server, stop_server
 
 test_vars = {}
@@ -70,15 +71,121 @@ class BaseProcessTest:
         hc.request(*args)
         return hc.getresponse()
 
-class TestRoot(BaseProcessTest):
+class TestGetRoot(BaseProcessTest):
 
-    n_process_connections = 1
+    n_process_connections = 3
 
     def test(self):
         r = self.process_request('GET', '/')
         r.status = 200
         r.reason = 'OK'
-        assert '    /wc' in r.read()
+        assert '    wc' in r.read()
+        return
+
+    def test_accept(self):
+        r = self.process_request('GET', '/', '', {'Accept': 'text/json'})
+        r.status = 200
+        r.reason = 'OK'
+        data = r.read()
+        try:
+            obj = json.loads(data)
+        except:
+            self.fail('returned data was not json')
+        assert isinstance(obj, dict)
+        assert 'wc' in obj
+        return
+
+    def test_accept_bad(self):
+        r = self.process_request('GET', '/', '', {'Accept': 'ctmaj/ctmin'})
+        r.status = 406
+        r.reason = 'Not Acceptable'
+        assert r.read() == ''
+        return
+
+class Test404(BaseProcessTest):
+
+    n_process_connections = 1
+
+    def test(self):
+        r = self.process_request('GET', '/thisshouldnotexist')
+        r.status = 404
+        r.reason = 'Not Found'
+        return
+
+class TestPostGetDelete(BaseProcessTest):
+
+    n_process_connections = 4
+
+    def test(self):
+
+        headers = {'Content-Type': 'text/plain'}
+        r = self.process_request('POST', '/echo', 'data', headers)
+        assert r.status == 201
+        assert r.reason == 'Created'
+        headers = dict(r.getheaders())
+        assert 'content-length' in headers
+        assert headers['content-length'] == '0'
+        assert 'location' in headers
+        ident = headers['location'].split('/')[-1]
+        assert r.read() == ''
+
+        r = self.process_request('GET', '/job/%s' % ident)
+        assert r.status == 200
+        assert r.reason == 'OK'
+        headers = dict(r.getheaders())
+        assert 'content-length' in headers
+        try:
+            content_length = int(headers['content-length'])
+        except ValueError:
+            self.fail('content-length is not an integer')
+        assert len(r.read()) == content_length
+
+        r = self.process_request('DELETE', '/job/%s' % ident)
+        assert r.status == 204
+        assert r.reason == 'No Content'
+        assert r.read() == ''
+
+        r = self.process_request('GET', '/job/%s' % ident)
+        assert r.status == 410
+        assert r.reason == 'Gone'
+        headers = dict(r.getheaders())
+        assert 'content-length' in headers
+        try:
+            content_length = int(headers['content-length'])
+        except ValueError:
+            self.fail('content-length is not an integer')
+        assert content_length == 0
+        assert r.read() == ''
+
+        return
+
+class TestValidator(BaseProcessTest):
+
+    """test that a handler's validation presents correctly on the front end"""
+
+    n_process_connections = 3
+
+    def test_okay(self):
+        headers = {'Content-Type': 'text/plain'}
+        data = 'http://localhost:8081/'
+        r = self.process_request('POST', '/wc', data, headers)
+        assert r.status == 201
+        assert r.reason == 'Created'
+        return
+
+    def test_bad_content_type(self):
+        headers = {'Content-Type': 'text/json'}
+        data = 'http://localhost:8081/'
+        r = self.process_request('POST', '/wc', data, headers)
+        assert r.status == 415
+        assert r.reason == 'Unsupported Media Type'
+        return
+
+    def test_bad_request(self):
+        headers = {'Content-Type': 'text/plain'}
+        r = self.process_request('POST', '/wc', 'bogus', headers)
+        assert r.status == 400
+        assert r.reason == 'Bad Request'
         return
 
 # eof

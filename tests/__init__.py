@@ -58,7 +58,8 @@ def start_process_server():
     fo_err = open('tmp/process_test.stderr', 'a')
     po = subprocess.Popen(['dpf_process_server', 
                            '-C', 'tmp/process', 
-                           '-H', '/wc=dpf.process.handlers.WCHandler'], 
+                           '-H', 'wc=dpf.process.handlers.WCHandler', 
+                           '-H', 'echo=dpf.process.handlers.EchoHandler'], 
                           stdout=fo_out, 
                           stderr=fo_err)
 
