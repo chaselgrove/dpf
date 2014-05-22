@@ -11,10 +11,10 @@ from . import start_process_server, start_data_server, stop_server
 test_vars = {}
 
 def setup():
-    (po, fo_out, fo_err) = start_data_server()
-    test_vars['data_po'] = po
-    test_vars['data_fo_out'] = fo_out
-    test_vars['data_fo_err'] = fo_err
+#    (po, fo_out, fo_err) = start_data_server()
+#    test_vars['data_po'] = po
+#    test_vars['data_fo_out'] = fo_out
+#    test_vars['data_fo_err'] = fo_err
     (po, fo_out, fo_err) = start_process_server()
     test_vars['process_po'] = po
     test_vars['process_fo_out'] = fo_out
@@ -22,9 +22,9 @@ def setup():
     return
 
 def teardown():
-    stop_server(test_vars['data_po'], 
-                test_vars['data_fo_out'], 
-                test_vars['data_fo_err'])
+#    stop_server(test_vars['data_po'], 
+#                test_vars['data_fo_out'], 
+#                test_vars['data_fo_err'])
     stop_server(test_vars['process_po'], 
                 test_vars['process_fo_out'], 
                 test_vars['process_fo_err'])
