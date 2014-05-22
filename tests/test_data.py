@@ -105,6 +105,7 @@ class TestPostGetDelete(BaseDataTest):
             content_length = int(headers['content-length'])
         except ValueError:
             self.fail('content-length is not an integer')
+        assert content_length == len(data)
         assert r.read() == data
 
         r = self.request('DELETE', '/%s' % ident)
