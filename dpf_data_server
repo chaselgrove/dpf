@@ -83,10 +83,12 @@ app = dpf.data.Application(cache, handlers)
 httpd = wsgiref.simple_server.make_server('localhost', args.port, app)
 print 'ready to serve on port %d' % args.port
 
-if args.serve_forever:
-    httpd.serve_forever()
-
-httpd.handle_request()
+try:
+    if args.serve_forever:
+        httpd.serve_forever()
+    httpd.handle_request()
+except KeyboardInterrupt:
+    print 'caught ctl-c'
 
 sys.exit(0)
 
