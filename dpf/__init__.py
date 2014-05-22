@@ -60,13 +60,26 @@ class HTTP501NotImplemented(BaseHTTPError):
 
     status = '501 Not Implemented'
 
-def choose_media_type(environ, resource_types):
+def get_accept(environ):
 
-    """choose_media_type(environ, resource_types) -> resource type
+    """get_accept(environ) -> accept header
+
+    Return the Accept header from the request, or */* if it is not present.
+
+    environ is the WSGI environment variable, from which the Accept header is read.
+    """
+
+    if 'HTTP_ACCEPT' in environ:
+        return environ['HTTP_ACCEPT']
+    return '*/*'
+
+def choose_media_type(accept, resource_types):
+
+    """choose_media_type(accept, resource_types) -> resource type
 
     select a media type for the response
 
-    environ is the WSGI environment variable, from which the Accept header is read and parsed.  If there is no Accept header, '*/*' is assumed.  If the Accept header cannot be parsed, HTTP400BadRequest is raised.
+    accept is the Accept header from the request.  If there is no Accept header, '*/*' is assumed.  If the Accept header cannot be parsed, HTTP400BadRequest is raised.
 
     resource_types is an ordered list of available resource types, with the most desirable type first.
 
@@ -74,11 +87,6 @@ def choose_media_type(environ, resource_types):
 
     If not match is found, HTTP406NotAcceptable is raised.
     """
-
-    try:
-        accept = environ['HTTP_ACCEPT']
-    except KeyError:
-        accept = '*/*'
 
     # list of (type, subtype, q)
     accept_types = []

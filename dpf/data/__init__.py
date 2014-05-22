@@ -142,7 +142,8 @@ class Application(dpf.Application):
                 to_types = self.data_handlers[source_content_type].to_types
                 available_types.extend(to_types)
 
-            content_type = dpf.choose_media_type(environ, available_types)
+            content_type = dpf.choose_media_type(dpf.get_accept(environ), 
+                                                 available_types)
 
             fname = os.path.join(self.base_dir, ident, 'data')
 

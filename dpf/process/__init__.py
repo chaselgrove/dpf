@@ -75,7 +75,8 @@ class Application(dpf.Application):
     def handle_root(self, environ):
 
         if environ['REQUEST_METHOD'] == 'GET':
-            mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+            mt = dpf.choose_media_type(dpf.get_accept(environ), 
+                                       ['text/plain', 'text/json'])
             if mt == 'text/plain':
                 output = 'Available:\n'
                 for label in sorted(self.process_handlers):
@@ -104,7 +105,7 @@ class Application(dpf.Application):
             raise dpf.HTTP404NotFound()
 
         if environ['REQUEST_METHOD'] == 'GET':
-            (content_type, output) = ph.get_doc(environ)
+            (content_type, output) = ph.get_doc(dpf.get_accept(environ))
             headers = [('Content-Type', content_type),
                        ('Content-Length', str(len(output)))]
             oi = [output]
@@ -166,16 +167,18 @@ class Application(dpf.Application):
 
         if environ['REQUEST_METHOD'] == 'GET':
 
+            accept = dpf.get_accept(environ)
+
             if environ['PATH_INFO'] == job_url or \
             environ['PATH_INFO'] == job_url+'/':
-                (content_type, output) = ph.info(environ, job_dir)
+                (content_type, output) = ph.info(accept, job_dir)
                 headers = [('Content-Type', content_type),
                            ('Content-Length', str(len(output)))]
                 oi = [output]
                 return ('200 OK', headers, oi)
 
             subpath = environ['PATH_INFO'][len(job_url)+1:]
-            (content_type, content) = ph.get_subpart(environ, job_dir, subpath)
+            (content_type, content) = ph.get_subpart(accept, job_dir, subpath)
             headers = [('Content-Type', content_type), 
                        ('Content-Length', str(len(content)))]
             return ('200 OK', headers, [content])
@@ -193,7 +196,7 @@ class Application(dpf.Application):
 
             # we just use this to raise the 404 if the subpart doesn't exist; 
             # if it does...
-            ph.get_subpart(environ, job_dir, subpath)
+            ph.get_subpart(dpf.get_accept(environ), job_dir, subpath)
 
             # ...fall through to method not allowed
             raise dpf.HTTP405MethodNotAllowed(['GET'])

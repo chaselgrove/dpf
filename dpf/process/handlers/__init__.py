@@ -54,13 +54,13 @@ class SGEHandler(ProcessHandler):
 
         return status
 
-    def info(self, environ, job_dir):
+    def info(self, accept, job_dir):
         d = {'job_id': self._get_job_id(job_dir), 
              'job_status': self._get_job_status(job_dir)}
         if d['job_status'] not in ('queued', 'error'):
             d['stdout'] = 'stdout'
             d['stderr'] = 'stderr'
-        mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
         if mt == 'text/plain':
             output = ''
             for key in ('job_id', 'job_status', 'stdout', 'stderr'):
@@ -70,14 +70,14 @@ class SGEHandler(ProcessHandler):
             output = json.dumps(d)
         return (mt, output)
 
-    def get_subpart(self, environ, job_dir, subpart):
+    def get_subpart(self, accept, job_dir, subpart):
 
         status = self._get_job_status(job_dir)
 
         if subpart == 'stdout':
             if status in ('queued', 'error'):
                 raise dpf.HTTP404NotFound()
-            dpf.choose_media_type(environ, ['text/plain'])
+            dpf.choose_media_type(accept, ['text/plain'])
             fname = os.path.join(job_dir, 'stdout')
             if not os.path.exists(fname):
                 output = ''
@@ -95,7 +95,7 @@ class SGEHandler(ProcessHandler):
                 output = ''
             else:
                 output = open(fname).read()
-            dpf.choose_media_type(environ, ['text/plain'])
+            dpf.choose_media_type(accept, ['text/plain'])
             headers = [('Content-Type', 'text/plain'),
                        ('Content-Length', str(len(output)))]
             return ('200 OK', headers, [output])
@@ -129,7 +129,7 @@ class SGEHandler(ProcessHandler):
 
         return
 
-    def delete(self, environ, job_dir):
+    def delete(self, accept, job_dir):
         args = ['qdel', str(self._get_job_id(job_dir))]
         po = subprocess.Popen(args, stdout=subprocess.PIPE)
         po.wait()
@@ -144,8 +144,8 @@ class WCHandler(SGEHandler):
         self.description = 'word count (wc)'
         return
 
-    def get_doc(self, environ):
-        mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+    def get_doc(self, accept):
+        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
         if mt == 'text/plain':
             output = 'wc\n'
         else:
@@ -180,8 +180,8 @@ class EchoHandler(ProcessHandler):
         self.description = 'echo the input to stdout'
         return
 
-    def get_doc(self, environ):
-        mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+    def get_doc(self, accept):
+        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
         if mt == 'text/plain':
             output = 'echo the input to stdout\n'
         else:
@@ -197,13 +197,13 @@ class EchoHandler(ProcessHandler):
         open(os.path.join(job_dir, 'content_type'), 'w').write(content_type)
         return
 
-    def info(self, environ, job_dir):
+    def info(self, accept, job_dir):
         data = open(os.path.join(job_dir, 'data')).read()
         data_content_type = open(os.path.join(job_dir, 'content_type')).read()
         d = {'process': 'echo', 
              'content type': data_content_type, 
              'data length': len(data)}
-        mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
         if mt == 'text/plain':
             output = ''
             for key in ('process', 'content type', 'data length'):
@@ -213,14 +213,14 @@ class EchoHandler(ProcessHandler):
             output = json.dumps(d)
         return (mt, output)
 
-    def get_subpart(self, environ, job_dir, subpart):
+    def get_subpart(self, accept, job_dir, subpart):
         data_content_type = open(os.path.join(job_dir, 'content_type')).read()
         if subpart == 'stdout':
-            mt = dpf.choose_media_type(environ, [data_content_type])
+            mt = dpf.choose_media_type(accept, [data_content_type])
             output = open(os.path.join(job_dir, 'data')).read()
             return(mt, output)
         if subpart == 'stderr':
-            mt = dpf.choose_media_type(environ, ['text/plain'])
+            mt = dpf.choose_media_type(accept, ['text/plain'])
             return (mt, '')
         raise dpf.HTTP404NotFound()
 
