@@ -15,6 +15,17 @@ class ProcessHandler:
     def __init__(self):
         return
 
+    def get_data(self, job_dir):
+        """return the data sent with the launch (POST) request"""
+        return open(os.path.join(job_dir, 'data')).read()
+
+    def get_content_type(self, job_dir):
+        """return the content-type sent with the launch (POST) request, or None if none was given"""
+        ct_fname = os.path.join(job_dir, 'content-type')
+        if not os.path.exists(ct_fname):
+            return None
+        return open(ct_fname).read()
+
 class SGEHandler(ProcessHandler):
 
     """base class for handlers using SGE"""
@@ -152,10 +163,14 @@ class WCHandler(SGEHandler):
             output = json.dumps('wc json') + '\n'
         return (mt, output)
 
-    def launch(self, environ, job_dir):
+    def launch(self, job_dir):
 
-        data = open(os.path.join(job_dir, 'data')).read()
-        if environ['CONTENT_TYPE'] != 'text/plain':
+        data = self.get_data(job_dir)
+        content_type = self.get_content_type(job_dir)
+        if content_type is None:
+            content_type = 'text/plain'
+
+        if content_type != 'text/plain':
             raise dpf.HTTP415UnsupportedMediaType()
         if not data.startswith('http://'):
             raise dpf.HTTP400BadRequest('text/plain',
@@ -188,20 +203,14 @@ class EchoHandler(ProcessHandler):
             output = json.dumps('echo the input to stdout') + '\n'
         return (mt, output)
 
-    def launch(self, environ, job_dir):
-        data = open(os.path.join(job_dir, 'data')).read()
-        try:
-            content_type = environ['CONTENT_TYPE']
-        except KeyError:
-            content_type = 'text/plain'
-        open(os.path.join(job_dir, 'content_type'), 'w').write(content_type)
+    def launch(self, job_dir):
         return
 
     def info(self, accept, job_dir):
-        data = open(os.path.join(job_dir, 'data')).read()
-        data_content_type = open(os.path.join(job_dir, 'content_type')).read()
+        data = self.get_data(job_dir)
+        content_type = self.get_content_type(job_dir)
         d = {'process': 'echo', 
-             'content type': data_content_type, 
+             'content type': content_type, 
              'data length': len(data)}
         mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
         if mt == 'text/plain':
@@ -214,10 +223,10 @@ class EchoHandler(ProcessHandler):
         return (mt, output)
 
     def get_subpart(self, accept, job_dir, subpart):
-        data_content_type = open(os.path.join(job_dir, 'content_type')).read()
+        content_type = get_content_type(job_dir)
         if subpart == 'stdout':
-            mt = dpf.choose_media_type(accept, [data_content_type])
-            output = open(os.path.join(job_dir, 'data')).read()
+            mt = dpf.choose_media_type(accept, [content_type])
+            output = self.get_data(job_dir)
             return(mt, output)
         if subpart == 'stderr':
             mt = dpf.choose_media_type(accept, ['text/plain'])

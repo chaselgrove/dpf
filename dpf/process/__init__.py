@@ -134,7 +134,10 @@ class Application(dpf.Application):
             try:
                 ident = os.path.basename(job_dir)
                 open(os.path.join(job_dir, 'data'), 'w').write(data)
-                ph.launch(environ, job_dir)
+                if 'CONTENT_TYPE' in environ:
+                    ct = environ['CONTENT_TYPE']
+                    open(os.path.join(job_dir, 'content-type'), 'w').write(ct)
+                ph.launch(job_dir)
             except:
                 shutil.rmtree(job_dir)
                 raise
