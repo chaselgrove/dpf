@@ -80,12 +80,11 @@ class Application(dpf.Application):
                 output = 'Available:\n'
                 for label in sorted(self.process_handlers):
                     ph = self.process_handlers[label]
-                    output += '    /%s: %s\n' % (label, ph.description)
+                    output += '    %s: %s\n' % (label, ph.description)
             else:
                 l = {}
-                for label in sorted(self.process_handlers):
-                    ph = self.process_handlers[label]
-                    l['/%s' % label] = ph.description
+                for (label, ph) in self.process_handlers.iteritems():
+                    l[label] = ph.description
                 output = json.dumps(l) + '\n'
             headers = [('Content-Type', mt),
                        ('Content-Length', str(len(output)))]
