@@ -14,8 +14,8 @@ class JSONHandler(DataHandler):
 
     def __init__(self):
         DataHandler.__init__(self)
-        self.from_type = 'text/json'
-        self.to_types = ['text/json']
+        self.from_type = 'application/json'
+        self.to_types = ['application/json']
         return
 
     def validate(self, fname):
@@ -31,7 +31,7 @@ class CSVHandler(DataHandler):
     def __init__(self):
         DataHandler.__init__(self)
         self.from_type = 'text/csv'
-        self.to_types = ['text/json']
+        self.to_types = ['application/json']
         return
 
     def validate(self, fname):

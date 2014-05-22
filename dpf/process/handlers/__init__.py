@@ -71,7 +71,7 @@ class SGEHandler(ProcessHandler):
         if d['job_status'] not in ('queued', 'error'):
             d['stdout'] = 'stdout'
             d['stderr'] = 'stderr'
-        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
+        mt = dpf.choose_media_type(accept, ['text/plain', 'application/json'])
         if mt == 'text/plain':
             output = ''
             for key in ('job_id', 'job_status', 'stdout', 'stderr'):
@@ -156,7 +156,7 @@ class WCHandler(SGEHandler):
         return
 
     def get_doc(self, accept):
-        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
+        mt = dpf.choose_media_type(accept, ['text/plain', 'application/json'])
         if mt == 'text/plain':
             output = 'wc\n'
         else:
@@ -196,7 +196,7 @@ class EchoHandler(ProcessHandler):
         return
 
     def get_doc(self, accept):
-        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
+        mt = dpf.choose_media_type(accept, ['text/plain', 'application/json'])
         if mt == 'text/plain':
             output = 'echo the input to stdout\n'
         else:
@@ -212,7 +212,7 @@ class EchoHandler(ProcessHandler):
         d = {'process': 'echo', 
              'content type': content_type, 
              'data length': len(data)}
-        mt = dpf.choose_media_type(accept, ['text/plain', 'text/json'])
+        mt = dpf.choose_media_type(accept, ['text/plain', 'application/json'])
         if mt == 'text/plain':
             output = ''
             for key in ('process', 'content type', 'data length'):

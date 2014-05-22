@@ -76,7 +76,7 @@ class Application(dpf.Application):
 
         if environ['REQUEST_METHOD'] == 'GET':
             mt = dpf.choose_media_type(dpf.get_accept(environ), 
-                                       ['text/plain', 'text/json'])
+                                       ['text/plain', 'application/json'])
             if mt == 'text/plain':
                 output = 'Available:\n'
                 for label in sorted(self.process_handlers):
