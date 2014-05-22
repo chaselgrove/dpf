@@ -7,10 +7,16 @@ class DataHandler:
 
     """base class for type handlers"""
 
+    def __init__(self):
+        return
+
 class JSONHandler(DataHandler):
 
-    from_type = 'text/json'
-    to_types = ['text/json']
+    def __init__(self):
+        DataHandler.__init__(self)
+        self.from_type = 'text/json'
+        self.to_types = ['text/json']
+        return
 
     def validate(self, fname):
         data = open(fname).read()
@@ -22,8 +28,11 @@ class JSONHandler(DataHandler):
 
 class CSVHandler(DataHandler):
 
-    from_type = 'text/csv'
-    to_types = ['text/json']
+    def __init__(self):
+        DataHandler.__init__(self)
+        self.from_type = 'text/csv'
+        self.to_types = ['text/json']
+        return
 
     def validate(self, fname):
         try:

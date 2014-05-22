@@ -76,7 +76,7 @@ for handler_path in handler_paths:
     (module_path, class_name) = handler_path.rsplit('.', 1)
     module = importlib.import_module(module_path)
     handler = getattr(module, class_name)
-    handlers.append(handler)
+    handlers.append(handler())
 
 app = dpf.data.Application(cache, handlers)
 

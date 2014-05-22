@@ -16,8 +16,8 @@ class Application(dpf.Application):
     def __init__(self, base_dir, data_handlers):
         self.base_dir = base_dir
         self.data_handlers = {}
-        for dh_class in data_handlers:
-            self.data_handlers[dh_class.from_type] = dh_class
+        for dh in data_handlers:
+            self.data_handlers[dh.from_type] = dh
         return
 
     def __call__(self, environ, start_response):
@@ -93,8 +93,7 @@ class Application(dpf.Application):
             fo.close()
 
             if environ['CONTENT_TYPE'] in self.data_handlers:
-                dh_class = self.data_handlers[environ['CONTENT_TYPE']]
-                data_handler = dh_class()
+                data_handler = self.data_handlers[environ['CONTENT_TYPE']]
                 if not data_handler.validate(full_fname):
                     shutil.rmtree(dir)
                     msg = 'Data did not validate against content-type.\n'
@@ -150,8 +149,7 @@ class Application(dpf.Application):
             if content_type == source_content_type:
                 data = open(fname).read()
             else:
-                dh_class = self.data_handlers[source_content_type]
-                data_handler = dh_class()
+                data_handler = self.data_handlers[source_content_type]
                 data = data_handler.convert(fname, content_type)
 
             tt = time.gmtime(d['creation time'])
