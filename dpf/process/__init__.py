@@ -175,7 +175,10 @@ class Application(dpf.Application):
                 return ('200 OK', headers, oi)
 
             subpath = environ['PATH_INFO'][len(job_url)+1:]
-            return ph.get_subpart(environ, job_dir, subpath)
+            (content_type, content) = ph.get_subpart(environ, job_dir, subpath)
+            headers = [('Content-Type', content_type), 
+                       ('Content-Length', str(len(content)))]
+            return ('200 OK', headers, [content])
 
         if environ['REQUEST_METHOD'] == 'DELETE':
 

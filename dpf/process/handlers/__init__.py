@@ -216,17 +216,12 @@ class EchoHandler(ProcessHandler):
     def get_subpart(self, environ, job_dir, subpart):
         data_content_type = open(os.path.join(job_dir, 'content_type')).read()
         if subpart == 'stdout':
-            dpf.choose_media_type(environ, [data_content_type])
+            mt = dpf.choose_media_type(environ, [data_content_type])
             output = open(os.path.join(job_dir, 'data')).read()
-            headers = [('Content-Type', 'text/plain'),
-                       ('Content-Length', str(len(output)))]
-            return ('200 OK', headers, [output])
+            return(mt, output)
         if subpart == 'stderr':
-            dpf.choose_media_type(environ, ['text/plain'])
-            output = ''
-            headers = [('Content-Type', 'text/plain'),
-                       ('Content-Length', str(len(output)))]
-            return ('200 OK', headers, [output])
+            mt = dpf.choose_media_type(environ, ['text/plain'])
+            return (mt, '')
         raise dpf.HTTP404NotFound()
 
     def delete(self, environ, job_dir):
