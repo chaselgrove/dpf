@@ -164,4 +164,72 @@ class WCHandler(SGEHandler):
         self._launch_sge(job_dir, ['/Users/ch/Desktop/umms/dpf/wc.sge', data])
         return
 
+class EchoHandler(ProcessHandler):
+
+    """this handler does nothing
+
+    no validation is done of the input
+
+    stdout contains the input and stderr is empty
+
+    no job is actually launched
+    """
+
+    def __init__(self):
+        ProcessHandler.__init__(self)
+        self.description = 'echo the input to stdout'
+        return
+
+    def get_doc(self, environ):
+        mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+        if mt == 'text/plain':
+            output = 'echo the input to stdout\n'
+        else:
+            output = json.dumps('echo the input to stdout') + '\n'
+        return (mt, output)
+
+    def launch(self, environ, job_dir):
+        data = open(os.path.join(job_dir, 'data')).read()
+        try:
+            content_type = environ['CONTENT_TYPE']
+        except KeyError:
+            content_type = 'text/plain'
+        open(os.path.join(job_dir, 'content_type'), 'w').write(content_type)
+        return
+
+    def info(self, environ, job_dir):
+        data = open(os.path.join(job_dir, 'data')).read()
+        data_content_type = open(os.path.join(job_dir, 'content_type')).read()
+        d = {'process': 'echo', 
+             'content type': data_content_type, 
+             'data length': len(data)}
+        mt = dpf.choose_media_type(environ, ['text/plain', 'text/json'])
+        if mt == 'text/plain':
+            output = ''
+            for key in ('process', 'content type', 'data length'):
+                if key in d:
+                    output += '%s: %s\n' % (key, d[key])
+        else:
+            output = json.dumps(d)
+        return (mt, output)
+
+    def get_subpart(self, environ, job_dir, subpart):
+        data_content_type = open(os.path.join(job_dir, 'content_type')).read()
+        if subpart == 'stdout':
+            dpf.choose_media_type(environ, [data_content_type])
+            output = open(os.path.join(job_dir, 'data')).read()
+            headers = [('Content-Type', 'text/plain'),
+                       ('Content-Length', str(len(output)))]
+            return ('200 OK', headers, [output])
+        if subpart == 'stderr':
+            dpf.choose_media_type(environ, ['text/plain'])
+            output = ''
+            headers = [('Content-Type', 'text/plain'),
+                       ('Content-Length', str(len(output)))]
+            return ('200 OK', headers, [output])
+        raise dpf.HTTP404NotFound()
+
+    def delete(self, environ, job_dir):
+        return
+
 # eof
