@@ -188,7 +188,7 @@ class Application(dpf.Application):
             if environ['PATH_INFO'] == job_url or \
                environ['PATH_INFO'] == job_url+'/':
                 self.delete_job(ident)
-                ph.delete(environ, job_dir)
+                ph.delete(job_dir)
                 shutil.rmtree(job_dir)
                 return ('204 No Content', [], [''])
 

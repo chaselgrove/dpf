@@ -129,7 +129,7 @@ class SGEHandler(ProcessHandler):
 
         return
 
-    def delete(self, accept, job_dir):
+    def delete(self, job_dir):
         args = ['qdel', str(self._get_job_id(job_dir))]
         po = subprocess.Popen(args, stdout=subprocess.PIPE)
         po.wait()
@@ -224,7 +224,7 @@ class EchoHandler(ProcessHandler):
             return (mt, '')
         raise dpf.HTTP404NotFound()
 
-    def delete(self, environ, job_dir):
+    def delete(self, job_dir):
         return
 
 # eof
