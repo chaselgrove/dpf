@@ -33,13 +33,7 @@ class Application(dpf.Application):
         self.process_handlers = {}
         for (label, ph) in process_handlers.iteritems():
             label = label.strip('/')
-            # The process handler class may be configured with extra arguments 
-            # to __init__().  If none are given (just the class is passed), 
-            # we explicitly store no extra arguments.
-            if not isinstance(ph, (tuple, list)):
-                self.process_handlers[label] = (ph, ())
-            else:
-                self.process_handlers[label] = ph
+            self.process_handlers[label] = ph
         self.db_fname = os.path.join(self.base_dir, 'jobs.sqlite')
         if not os.path.exists(self.db_fname):
             db = sqlite3.connect(self.db_fname)
@@ -85,17 +79,13 @@ class Application(dpf.Application):
             if mt == 'text/plain':
                 output = 'Available:\n'
                 for label in sorted(self.process_handlers):
-                    (ph_class, ph_args) = self.process_handlers[label]
-                    ph = ph_class(environ, *ph_args)
-                    description = ph.get_description()
-                    output += '    /%s: %s\n' % (label, description)
+                    ph = self.process_handlers[label]
+                    output += '    /%s: %s\n' % (label, ph.description)
             else:
                 l = {}
                 for label in sorted(self.process_handlers):
-                    (ph_class, ph_args) = self.process_handlers[label]
-                    ph = ph_class(environ, *ph_args)
-                    description = ph.get_description()
-                    l['/%s' % label] = description
+                    ph = self.process_handlers[label]
+                    l['/%s' % label] = ph.description
                 output = json.dumps(l) + '\n'
             headers = [('Content-Type', mt),
                        ('Content-Length', str(len(output)))]
@@ -110,14 +100,12 @@ class Application(dpf.Application):
 
         try:
             process_name = path.strip('/')
-            (ph_class, ph_args) = self.process_handlers[process_name]
+            ph = self.process_handlers[process_name]
         except KeyError:
             raise dpf.HTTP404NotFound()
 
-        ph = ph_class(environ, *ph_args)
-
         if environ['REQUEST_METHOD'] == 'GET':
-            (content_type, output) = ph.get_doc()
+            (content_type, output) = ph.get_doc(environ)
             headers = [('Content-Type', content_type),
                        ('Content-Length', str(len(output)))]
             oi = [output]
@@ -146,15 +134,12 @@ class Application(dpf.Application):
             try:
                 ident = os.path.basename(job_dir)
                 open(os.path.join(job_dir, 'data'), 'w').write(data)
-                ph.set_working_dir(job_dir)
-                ph.accept()
+                ph.launch(environ, job_dir)
             except:
                 shutil.rmtree(job_dir)
                 raise
 
             self.register_job(ident, process_name)
-
-            ph.launch()
 
             app_uri = wsgiref.util.application_uri(environ).rstrip('/')
             headers = [('Location', '%s/job/%s' % (app_uri, ident)), 
@@ -176,38 +161,37 @@ class Application(dpf.Application):
         if job_dict['deleted']:
             raise dpf.HTTP410Gone()
 
-        (ph_class, ph_args) = self.process_handlers[job_dict['process']]
-        ph = ph_class(environ, *ph_args)
-        ph.set_working_dir(os.path.join(self.base_dir, ident))
+        ph = self.process_handlers[job_dict['process']]
+        job_dir = os.path.join(self.base_dir, ident)
         job_url = '/job/%s' % ident
 
         if environ['REQUEST_METHOD'] == 'GET':
 
             if environ['PATH_INFO'] == job_url or \
             environ['PATH_INFO'] == job_url+'/':
-                (content_type, output) = ph.info()
+                (content_type, output) = ph.info(environ, job_dir)
                 headers = [('Content-Type', content_type),
                            ('Content-Length', str(len(output)))]
                 oi = [output]
                 return ('200 OK', headers, oi)
 
             subpath = environ['PATH_INFO'][len(job_url)+1:]
-            return ph.get_subpart(subpath)
+            return ph.get_subpart(environ, job_dir, subpath)
 
         if environ['REQUEST_METHOD'] == 'DELETE':
 
             if environ['PATH_INFO'] == job_url or \
                environ['PATH_INFO'] == job_url+'/':
                 self.delete_job(ident)
-                ph.delete()
-                shutil.rmtree(ph.working_dir)
+                ph.delete(environ, job_dir)
+                shutil.rmtree(job_dir)
                 return ('204 No Content', [], [''])
 
             subpath = environ['PATH_INFO'][len(job_url)+1:]
 
             # we just use this to raise the 404 if the subpart doesn't exist; 
             # if it does...
-            ph.get_subpart(subpath)
+            ph.get_subpart(environ, job_dir, subpath)
 
             # ...fall through to method not allowed
             raise dpf.HTTP405MethodNotAllowed(['GET'])

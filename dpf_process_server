@@ -86,7 +86,7 @@ for (location, (class_path, arguments)) in handler_info.iteritems():
     (module_path, class_name) = class_path.rsplit('.', 1)
     module = importlib.import_module(module_path)
     handler_class = getattr(module, class_name)
-    handlers[location] = (handler_class, arguments)
+    handlers[location] = handler_class(*arguments)
 
 app = dpf.process.Application(cache, handlers)
 
