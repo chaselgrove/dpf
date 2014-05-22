@@ -1,0 +1,82 @@
+#!/usr/bin/python
+
+# See file COPYING distributed with dpf for copyright and license.
+
+import sys
+import os
+import argparse
+import dpf
+
+progname = os.path.basename(sys.argv[0])
+
+description = """
+
+{progname} returns a media type given an accept header 
+and available media types.
+
+Example: 
+
+    $ {progname} "text/*,application/json;q=0.5" text/plain application/json
+    text/plain
+
+If the accept header contains an error, "400 Bad Request" is printed:
+
+    $ {progname} 'bogus' 'application/json' text/plain
+    400 Bad Request
+
+If no matching media type is found, "406 Not Acceptable" is printed:
+
+    $ {progname} application/json text/plain
+    406 Not Acceptable
+
+Matching types are found by ordering the accept header types by q value 
+and then comparing them against the available types in order.  So 
+
+    {progname} "*/*" text/plain application/json
+
+will return text/plain because it appears before application/json 
+on the command line, and 
+
+    {progname} "*/*;q=.5,application/*" text/plain application/json
+
+will return application/json since application/* is checked against the 
+available types before */* because of its higher q value.
+
+Exit values are:
+
+    0 on success
+
+    2 on command line error
+
+    4 on a 400 Bad Request error
+
+    6 on a 406 Not Acceptable error
+
+""".format(progname=progname)
+
+parser = argparse.ArgumentParser(description=description, 
+                                 formatter_class=argparse.RawTextHelpFormatter)
+
+parser.add_argument('accept', 
+                    help='Accept header')
+parser.add_argument('media_types', 
+                    metavar='media_type', 
+                    help='A media type', 
+                    nargs='+')
+
+args = parser.parse_args()
+
+try:
+    mt = dpf.choose_media_type(args.accept, args.media_types)
+except dpf.HTTP400BadRequest, data:
+    print '400 Bad Request'
+    sys.exit(4)
+except dpf.HTTP406NotAcceptable, data:
+    print '406 Not Acceptable'
+    sys.exit(6)
+
+print mt
+
+sys.exit(0)
+
+# eof

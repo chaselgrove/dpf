@@ -88,6 +88,10 @@ def choose_media_type(accept, resource_types):
     If not match is found, HTTP406NotAcceptable is raised.
     """
 
+    # This function is exposed in the script dpf_choose_media_type, 
+    # so if changes are made here, that script's documentation 
+    # should be updated to reflect them.
+
     # list of (type, subtype, q)
     accept_types = []
 
