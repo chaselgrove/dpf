@@ -8,7 +8,7 @@ import dpf
 
 sge_submit_re = re.compile('Your job (\d+) \(.*\) has been submitted')
 
-class ProcessHandler:
+class BaseProcessHandler:
 
     """base class for process handlers"""
 
@@ -26,7 +26,7 @@ class ProcessHandler:
             return None
         return open(ct_fname).read()
 
-class SGEHandler(ProcessHandler):
+class SGEHandler(BaseProcessHandler):
 
     """base class for handlers using SGE"""
 
@@ -179,7 +179,7 @@ class WCHandler(SGEHandler):
         self._launch_sge(job_dir, ['/Users/ch/Desktop/umms/dpf/wc.sge', data])
         return
 
-class EchoHandler(ProcessHandler):
+class EchoHandler(BaseProcessHandler):
 
     """this handler does nothing
 
@@ -191,7 +191,7 @@ class EchoHandler(ProcessHandler):
     """
 
     def __init__(self):
-        ProcessHandler.__init__(self)
+        BaseProcessHandler.__init__(self)
         self.description = 'echo the input to stdout'
         return
 
