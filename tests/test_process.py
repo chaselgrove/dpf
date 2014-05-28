@@ -83,7 +83,7 @@ class TestGetRoot(BaseProcessTest):
         return
 
     def test_accept(self):
-        r = self.process_request('GET', '/', '', {'Accept': 'text/json'})
+        r = self.process_request('GET', '/', '', {'Accept': 'application/json'})
         r.status = 200
         r.reason = 'OK'
         data = r.read()
@@ -174,7 +174,7 @@ class TestValidator(BaseProcessTest):
         return
 
     def test_bad_content_type(self):
-        headers = {'Content-Type': 'text/json'}
+        headers = {'Content-Type': 'application/json'}
         data = 'http://localhost:8081/'
         r = self.process_request('POST', '/wc', data, headers)
         assert r.status == 415

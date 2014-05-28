@@ -183,7 +183,7 @@ class TestValidator(BaseDataTest):
 
     def test(self):
 
-        r = self.request('POST', '/', ',', {'Content-Type': 'text/json'})
+        r = self.request('POST', '/', ',', {'Content-Type': 'application/json'})
         assert r.status == 400
         assert r.reason == 'Bad Request'
 
@@ -202,12 +202,15 @@ class TestConverter(BaseDataTest):
         headers = dict(r.getheaders())
         ident = headers['location'].split('/')[-1]
 
-        r = self.request('GET', '/%s' % ident, '', {'Accept': 'text/json'})
+        r = self.request('GET', 
+                         '/%s' % ident, 
+                         '', 
+                         {'Accept': 'application/json'})
         assert r.status == 200
         assert r.reason == 'OK'
         headers = dict(r.getheaders())
         assert headers.has_key('content-type')
-        assert headers['content-type'] == 'text/json'
+        assert headers['content-type'] == 'application/json'
         assert r.read() == json_data
 
 # eof
