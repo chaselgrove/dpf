@@ -52,14 +52,6 @@ class HTTP415UnsupportedMediaType(BaseHTTPError):
 
     status = '415 Unsupported Media Type'
 
-class HTTP500InternalServerError(BaseHTTPError):
-
-    status = '500 Internal Server Error'
-
-class HTTP501NotImplemented(BaseHTTPError):
-
-    status = '501 Not Implemented'
-
 def get_accept(environ):
 
     """get_accept(environ) -> accept header
