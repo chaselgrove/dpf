@@ -20,7 +20,9 @@ class BaseProcessHandler:
         return open(os.path.join(job_dir, 'data')).read()
 
     def _get_content_type(self, job_dir):
-        """return the content-type sent with the launch (POST) request, or None if none was given"""
+        """return the content-type sent with the launch (POST) request, 
+        or None if none was given
+        """
         ct_fname = os.path.join(job_dir, 'content-type')
         if not os.path.exists(ct_fname):
             return None
