@@ -15,11 +15,11 @@ class ProcessHandler:
     def __init__(self):
         return
 
-    def get_data(self, job_dir):
+    def _get_data(self, job_dir):
         """return the data sent with the launch (POST) request"""
         return open(os.path.join(job_dir, 'data')).read()
 
-    def get_content_type(self, job_dir):
+    def _get_content_type(self, job_dir):
         """return the content-type sent with the launch (POST) request, or None if none was given"""
         ct_fname = os.path.join(job_dir, 'content-type')
         if not os.path.exists(ct_fname):
@@ -165,8 +165,8 @@ class WCHandler(SGEHandler):
 
     def launch(self, job_dir):
 
-        data = self.get_data(job_dir)
-        content_type = self.get_content_type(job_dir)
+        data = self._get_data(job_dir)
+        content_type = self._get_content_type(job_dir)
         if content_type is None:
             content_type = 'text/plain'
 
@@ -207,8 +207,8 @@ class EchoHandler(ProcessHandler):
         return
 
     def info(self, accept, job_dir):
-        data = self.get_data(job_dir)
-        content_type = self.get_content_type(job_dir)
+        data = self._get_data(job_dir)
+        content_type = self._get_content_type(job_dir)
         d = {'process': 'echo', 
              'content type': content_type, 
              'data length': len(data)}
@@ -223,10 +223,10 @@ class EchoHandler(ProcessHandler):
         return (mt, output)
 
     def get_subpart(self, accept, job_dir, subpart):
-        content_type = get_content_type(job_dir)
+        content_type = self._get_content_type(job_dir)
         if subpart == 'stdout':
             mt = dpf.choose_media_type(accept, [content_type])
-            output = self.get_data(job_dir)
+            output = self._get_data(job_dir)
             return(mt, output)
         if subpart == 'stderr':
             mt = dpf.choose_media_type(accept, ['text/plain'])
