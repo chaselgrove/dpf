@@ -176,7 +176,7 @@ class WCHandler(SGEHandler):
             raise dpf.HTTP400BadRequest('text/plain',
                                         'data must contain a URL\n')
 
-        self._launch_sge(job_dir, ['/Users/ch/Desktop/umms/dpf/wc.sge', data])
+        self._launch_sge(job_dir, ['wc.sge', data])
         return
 
 class EchoHandler(BaseProcessHandler):
