@@ -2,11 +2,13 @@
 
 import os
 import subprocess
+import tempfile
 import re
 import json
 import dpf
 
 sge_submit_re = re.compile('Your job (\d+) \(.*\) has been submitted')
+media_type_re = re.compile('^[A-Za-z0-9\-\+\.]+/[A-Za-z0-9\-\+\.]+$')
 
 class BaseProcessHandler:
 
@@ -146,6 +148,92 @@ class BaseSGEHandler(BaseProcessHandler):
         args = ['qdel', str(self._get_job_id(job_dir))]
         po = subprocess.Popen(args, stdout=subprocess.PIPE)
         po.wait()
+        return
+
+class ScriptHandler(BaseProcessHandler):
+
+    def _execute(self, args):
+        with tempfile.TemporaryFile() as fo_out:
+            with open(os.devnull, 'w') as fo_err:
+                command = [self.script]
+                command.extend(args)
+                returncode = subprocess.call(command, 
+                                             stdout=fo_stdout, 
+                                             stderr=fo_stderr)
+            fo_out.seek(0)
+            stdout = fo_out.read()
+        return (returncode, stdout)
+
+    def _split_output(self, data):
+        """_split_output(data) -> (media_type, content)
+
+        split script output into a media type and message content
+
+        the media type is checked and ValueError is raised if it is malformed
+        if the media type 
+        """
+        if '\n' not in data:
+            raise ValueError('not enough lines in output')
+        (media_type, content) = data.split('\n', 1)
+        if not re.search(media_type):
+            raise ValueError('bad media type: %s' % media_type)
+        return (media_type, content)
+
+    def __init__(self, script):
+        BaseProcessHandler.__init__(self)
+        self.script = script
+        (returncode, stdout) = self._execute('description')
+        if returncode != 0:
+            raise ValueError('"%s description" returned %d' % (self.script, 
+                                                               returncode))
+        self.description = stdout.strip()
+        return
+
+    def get_doc(self, accept):
+        (returncode, stdout) = self._execute(['doc', accept])
+        if returncode == 4:
+            raise dpf.HTTP400BadRequest()
+        if returncode == 6:
+            raise dpf.HTTP406NotAcceptable()
+        if returncode != 0:
+            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+        return self._split_output(stdout)
+
+    def launch(self, job_dir):
+        (returncode, stdout) = self._execute(['launch', job_dir])
+        if returncode == 4:
+            raise dpf.HTTP400BadRequest()
+        if returncode == 15:
+            raise dpf.HTTP415UnsupportedMediaType()
+        if returncode != 0:
+            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+        return
+
+    def info(self, accept, job_dir):
+        (returncode, stdout) = self._execute(['info', accept, job_dir])
+        if returncode == 4:
+            raise dpf.HTTP400BadRequest()
+        if returncode == 6:
+            raise dpf.HTTP406NotAcceptable()
+        if returncode != 0:
+            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+        return self._split_output(stdout)
+
+    def get_subpart(self, accept, job_dir, subpart):
+        args = ['subpart', accept, job_dir, subpart]
+        (returncode, stdout) = self._execute(args)
+        if returncode == 4:
+            raise dpf.HTTP400BadRequest()
+        if returncode == 6:
+            raise dpf.HTTP406NotAcceptable()
+        if returncode != 0:
+            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+        return self._split_output(stdout)
+
+    def delete(self, job_dir):
+        (returncode, stdout) = self._execute(['delete', job_dir])
+        if returncode != 0:
+            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
         return
 
 # eof
