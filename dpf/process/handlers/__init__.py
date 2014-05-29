@@ -191,7 +191,7 @@ class ScriptHandler(BaseProcessHandler):
 
     def get_doc(self, accept):
         (returncode, stdout) = self._execute(['doc', accept])
-        if returncode == 4:
+        if returncode == 40:
             raise dpf.HTTP400BadRequest()
         if returncode == 6:
             raise dpf.HTTP406NotAcceptable()
@@ -201,7 +201,7 @@ class ScriptHandler(BaseProcessHandler):
 
     def launch(self, job_dir):
         (returncode, stdout) = self._execute(['launch', job_dir])
-        if returncode == 4:
+        if returncode == 40:
             raise dpf.HTTP400BadRequest()
         if returncode == 15:
             raise dpf.HTTP415UnsupportedMediaType()
@@ -211,7 +211,7 @@ class ScriptHandler(BaseProcessHandler):
 
     def info(self, accept, job_dir):
         (returncode, stdout) = self._execute(['info', accept, job_dir])
-        if returncode == 4:
+        if returncode == 40:
             raise dpf.HTTP400BadRequest()
         if returncode == 6:
             raise dpf.HTTP406NotAcceptable()
@@ -222,8 +222,10 @@ class ScriptHandler(BaseProcessHandler):
     def get_subpart(self, accept, job_dir, subpart):
         args = ['subpart', accept, job_dir, subpart]
         (returncode, stdout) = self._execute(args)
-        if returncode == 4:
+        if returncode == 40:
             raise dpf.HTTP400BadRequest()
+        if returncode == 4:
+            raise dpf.HTTP404NotFound()
         if returncode == 6:
             raise dpf.HTTP406NotAcceptable()
         if returncode != 0:
