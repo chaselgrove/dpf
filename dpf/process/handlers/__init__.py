@@ -153,15 +153,15 @@ class BaseSGEHandler(BaseProcessHandler):
 class ScriptHandler(BaseProcessHandler):
 
     def _execute(self, args):
-        with tempfile.TemporaryFile() as fo_out:
-            with open(os.devnull, 'w') as fo_err:
+        with tempfile.TemporaryFile() as fo_stdout:
+            with open(os.devnull, 'w') as fo_stderr:
                 command = [self.script]
                 command.extend(args)
                 returncode = subprocess.call(command, 
-                                             stdout=fo_stdout, 
+                                             stdout=fo_stdout,
                                              stderr=fo_stderr)
-            fo_out.seek(0)
-            stdout = fo_out.read()
+            fo_stdout.seek(0)
+            stdout = fo_stdout.read()
         return (returncode, stdout)
 
     def _split_output(self, data):
@@ -175,14 +175,14 @@ class ScriptHandler(BaseProcessHandler):
         if '\n' not in data:
             raise ValueError('not enough lines in output')
         (media_type, content) = data.split('\n', 1)
-        if not re.search(media_type):
+        if not media_type_re.search(media_type):
             raise ValueError('bad media type: %s' % media_type)
         return (media_type, content)
 
     def __init__(self, script):
         BaseProcessHandler.__init__(self)
         self.script = script
-        (returncode, stdout) = self._execute('description')
+        (returncode, stdout) = self._execute(['description'])
         if returncode != 0:
             raise ValueError('"%s description" returned %d' % (self.script, 
                                                                returncode))
@@ -206,7 +206,8 @@ class ScriptHandler(BaseProcessHandler):
         if returncode == 15:
             raise dpf.HTTP415UnsupportedMediaType()
         if returncode != 0:
-            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+            raise ValueError('"%s launch" returned %d' % (self.script, 
+                                                          returncode))
         return
 
     def info(self, accept, job_dir):
@@ -216,7 +217,8 @@ class ScriptHandler(BaseProcessHandler):
         if returncode == 6:
             raise dpf.HTTP406NotAcceptable()
         if returncode != 0:
-            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+            raise ValueError('"%s info" returned %d' % (self.script, 
+                                                        returncode))
         return self._split_output(stdout)
 
     def get_subpart(self, accept, job_dir, subpart):
@@ -229,13 +231,15 @@ class ScriptHandler(BaseProcessHandler):
         if returncode == 6:
             raise dpf.HTTP406NotAcceptable()
         if returncode != 0:
-            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+            raise ValueError('"%s subpart" returned %d' % (self.script, 
+                                                           returncode))
         return self._split_output(stdout)
 
     def delete(self, job_dir):
         (returncode, stdout) = self._execute(['delete', job_dir])
         if returncode != 0:
-            raise ValueError('"%s doc" returned %d' % (self.script, returncode))
+            raise ValueError('"%s delete" returned %d' % (self.script, 
+                                                          returncode))
         return
 
 # eof
