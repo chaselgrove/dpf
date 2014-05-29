@@ -16,7 +16,7 @@ shift
 if [ $command = description ]
 then
     echo "bc arbitrary precision calculator"
-if [ $command = doc ]
+elif [ $command = doc ]
 then
     accept=$1
     media_type=`dph_choose_media_type "$accept" text/plain`
@@ -25,13 +25,13 @@ then
     if [ $rv = 6 ] ; then exit 6 ; fi
     echo "text/plain"
     echo "pass the input to bc"
-if [ $command = start ]
+elif [ $command = launch ]
 then
     job_dir=$1
     content_type=`cat $job_dir/content-type`
     if [ $content_type != text/plain ] ; then exit 15 ; fi
     cat $job_dir/data | bc > $job_dir/stdout 2> $job_dir/stderr
-if [ $command = info ]
+elif [ $command = info ]
 then
     accept=$1
     job_dir=$2
@@ -49,7 +49,7 @@ then
         echo application/json
         echo '{"process": "bc", "stderr": "stderr", "stdout": "stdout"}'
     fi
-if [ $command = subpart ]
+elif [ $command = subpart ]
 then
     accept=$1
     job_dir=$2
@@ -67,10 +67,9 @@ then
         echo text/plain
         cat $job_dir/stderr
     else
-    then
         exit 4
     fi
-if [ $command = delete ]
+elif [ $command = delete ]
 then
     :
 else
